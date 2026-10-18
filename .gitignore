@@ -1,0 +1,14 @@
+tmp/
+etc/
+logs/
+_*
+
+# Zig のビルド出力
+.zig-cache/
+zig-out/
+
+.claude/*
+!.claude/settings.json
+!.claude/commands/
+!.claude/agents/
+!.claude/skills/
