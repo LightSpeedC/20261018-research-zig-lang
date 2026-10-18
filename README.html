@@ -1,0 +1,360 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zig 言語の調査</title>
+<style>
+:root{--navy1:#12224d;--navy2:#2f5fbf;--ink:#1c2330;--ink-soft:#4a5568;--line:#d9dfe8;--code-bg:#f4f6fa;--link:#1a4fa0;--accent:var(--navy1);--accent2:var(--navy2);--soft:#f2f5fb;}
+.ch01{--accent:hsl(280,78%,25%);--accent2:hsl(280,58%,55%);--soft:hsl(280,28%,95%);}
+.ch02{--accent:hsl(240,78%,25%);--accent2:hsl(240,58%,55%);--soft:hsl(240,28%,95%);}
+.ch03{--accent:hsl(200,78%,25%);--accent2:hsl(200,58%,55%);--soft:hsl(200,28%,95%);}
+.ch04{--accent:hsl(160,78%,25%);--accent2:hsl(160,58%,55%);--soft:hsl(160,28%,95%);}
+.ch05{--accent:hsl(120,78%,25%);--accent2:hsl(120,58%,55%);--soft:hsl(120,28%,95%);}
+.ch06{--accent:hsl(80,78%,25%);--accent2:hsl(80,58%,55%);--soft:hsl(80,28%,95%);}
+.ch07{--accent:hsl(40,78%,25%);--accent2:hsl(40,58%,55%);--soft:hsl(40,28%,95%);}
+.ch08{--accent:hsl(0,78%,25%);--accent2:hsl(0,58%,55%);--soft:hsl(0,28%,95%);}
+body{margin:0;background:#fff;color:var(--ink,#1c2330);font-size:15.5px;line-height:1.85;font-family:"Yu Gothic UI","Meiryo",sans-serif;}
+.titlebar{background:linear-gradient(135deg,var(--navy1,#12224d),var(--navy2,#2f5fbf));color:#fff;padding:34px 30px 30px;}
+.titlebar .inner{max-width:1600px;margin:0 auto;}
+.titlebar h1{font-size:1.9em;margin:0 0 6px;color:#fff;}
+.titlebar .lead,.titlebar .date{margin:0;color:#e6ecf8;background:transparent;font-size:.92em;}
+.wrap{max-width:1600px;margin:0 auto;padding:0 30px;}
+a{color:var(--link,#1a4fa0);background:transparent;}
+a.back-home{display:inline-block;padding:2px 12px;border-radius:6px;background:linear-gradient(100deg,var(--navy1,#12224d),var(--navy2,#2f5fbf));color:#fff;text-decoration:none;font-weight:700;}
+.wrap > .back-home{margin-top:18px;}
+.toc{margin:20px 0;}
+.toc ol{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0;counter-reset:tocnum;}
+.toc ol li{counter-increment:tocnum;}
+.toc ol a{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;white-space:normal;width:310px;max-width:100%;padding:6px 12px;border-radius:6px;background:linear-gradient(100deg,var(--accent,#12224d),var(--accent2,#2f5fbf));color:#fff;text-decoration:none;font-weight:700;box-sizing:border-box;}
+.toc ol a::before{content:counter(tocnum) ". ";}
+section{padding:4px 26px 26px;margin:34px 0;border-radius:10px;background:linear-gradient(180deg,var(--soft,#f2f5fb),#fff);color:var(--ink,#1c2330);}
+section h1{font-size:1.45em;padding:14px 20px;margin:26px 0 20px;border-radius:8px;background:linear-gradient(100deg,var(--accent,#12224d),var(--accent2,#2f5fbf));color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.18);}
+section h2{font-size:1.18em;padding:6px 12px;margin:30px 0 12px;border-left:6px solid var(--accent,#12224d);background:linear-gradient(90deg,var(--soft,#f2f5fb),#fff);color:var(--accent,#12224d);}
+code{background:var(--code-bg,#f4f6fa);border:1px solid var(--line,#d9dfe8);color:#17335f;padding:0 4px;border-radius:4px;font-size:.92em;}
+pre{overflow-x:auto;padding:13px 16px;border-left:5px solid var(--accent2,#2f5fbf);border-radius:0 8px 8px 0;background:linear-gradient(180deg,var(--soft,#f2f5fb),#fff);color:var(--ink,#1c2330);}
+pre code{background:transparent;border:none;padding:0;color:var(--ink,#1c2330);}
+.tablewrap{overflow-x:auto;}
+table{border-collapse:collapse;border-radius:8px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.08);margin:10px 0;}
+th{background:linear-gradient(100deg,var(--accent,#12224d),var(--accent2,#2f5fbf));color:#fff;padding:9px 12px;text-align:left;}
+td{padding:9px 12px;vertical-align:top;border-bottom:1px solid var(--line,#d9dfe8);background:#fff;color:var(--ink,#1c2330);}
+tr:nth-child(even) td{background:#fafbfe;}
+td.num{text-align:right;white-space:nowrap;}
+td.nowrap{white-space:nowrap;}
+.callout{border-left:6px solid var(--accent,#12224d);background:linear-gradient(180deg,var(--soft,#f2f5fb),#fff);color:var(--ink,#1c2330);border-radius:0 8px 8px 0;padding:10px 16px;margin:14px 0;}
+.callout strong{color:var(--accent,#12224d);background:transparent;}
+footer{max-width:1600px;margin:0 auto;padding:18px 30px 30px;}
+</style>
+</head>
+<body>
+<div class="titlebar"><div class="inner">
+<h1>Zig 言語の調査</h1>
+<p class="lead">Zig がどんな言語か、どう書くか、どれくらい速いかを公開情報から調べる</p>
+<p class="date">📅 作成: 2026-10-18 / 更新: 2026-10-18</p>
+</div></div>
+<div class="wrap">
+<a class="back-home" href="../" title="親サイトへ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-label="⌂"><path d="M2 8 L8 2 L14 8 M4 7 V14 H12 V7"/></svg></a>
+
+<p>汎用のシステムプログラミング言語 Zig について、言語の特徴・構文・メモリ管理・エラー処理・並行処理・速度・採用例を調べた結果。</p>
+<div class="callout"><strong><code>std.Io</code> のコードは動かしていない。</strong>基本構文・メモリ管理・エラー処理は、Zig 0.17.0 で動くサンプルとテストで確かめた（<a href="notes/samples/syntax.zig">syntax.zig</a> ・ <a href="notes/samples/memory.zig">memory.zig</a> ・ <a href="notes/samples/errors.zig">errors.zig</a>。全件の実行は <code>tools/40_test/run-tests.cmd</code>）。並行処理の章の <code>std.Io</code> は 0.16 で入ったばかりで、版によって関数名や引数が変わりうる。</div>
+
+<nav class="toc"><ol>
+<li class="ch01"><a href="#ch01">Zig の概要</a></li>
+<li class="ch02"><a href="#ch02">基本構文</a></li>
+<li class="ch03"><a href="#ch03">メモリ管理</a></li>
+<li class="ch04"><a href="#ch04">エラー処理</a></li>
+<li class="ch05"><a href="#ch05">並行処理と非同期 I/O</a></li>
+<li class="ch06"><a href="#ch06">速度</a></li>
+<li class="ch07"><a href="#ch07">Zig で書かれたプロジェクト</a></li>
+<li class="ch08"><a href="#ch08">出典</a></li>
+</ol></nav>
+
+<section class="ch01" id="ch01">
+<h1>Zig の概要</h1>
+<p>Andrew Kelley 氏が 2016 年に始めた言語。非営利の Zig Software Foundation が開発する。C の置き換えを狙い、C と同じ領域をより安全・明快に書けるようにする。</p>
+<h2>特徴</h2>
+<ul>
+<li><strong>隠れた制御フローが無い</strong>。暗黙の関数呼び出し・メモリ確保・例外・演算子オーバーロード・マクロを持たない</li>
+<li><strong>手動メモリ管理</strong>。GC は無く、確保する関数には allocator を引数で渡す</li>
+<li><strong><code>comptime</code></strong>。コンパイル時に Zig のコードを実行でき、ジェネリクスやメタプログラミングを担う</li>
+<li><strong>エラーは値</strong>。例外は無く、エラー共用体型で返す</li>
+<li><strong>安全性チェック</strong>。Debug / ReleaseSafe では範囲外アクセスや整数オーバーフローを実行時に検出する</li>
+<li><strong>C との親和性</strong>。<code>@cImport</code> で C ヘッダを直接読む。<code>zig cc</code> は C/C++ のクロスコンパイラとしても使える</li>
+<li><strong>ビルドも Zig で書く</strong>。<code>build.zig</code> を使い、make や CMake は要らない</li>
+</ul>
+<h2>現状</h2>
+<ul>
+<li>1.0 前。版ごとに言語と標準ライブラリに破壊的変更が入る</li>
+<li>0.16.0 で I/O をインターフェースとして扱う形が入った</li>
+<li>手元に入れた Zig は <code>zig version</code> で 0.17.0 と確かめた。0.17.0 が最新の安定版で、2026-10-01 に出たという情報は、第三者のサイトの記述で、公式サイトでは確かめていない</li>
+</ul>
+<h2>C ・ Rust との比較</h2>
+<div class="tablewrap"><table>
+<thead><tr><th></th><th>C</th><th>Rust</th><th>Zig</th></tr></thead>
+<tbody>
+<tr><td>メモリ安全性</td><td>なし</td><td>コンパイル時に保証（borrow checker）</td><td>実行時チェックのみ</td></tr>
+<tr><td>エラー処理</td><td>戻り値・errno</td><td><code>Result&lt;T, E&gt;</code></td><td>エラー共用体 <code>E!T</code></td></tr>
+<tr><td>学習コスト</td><td>低</td><td>高</td><td>中</td></tr>
+<tr><td>安定性</td><td>高</td><td>高</td><td>1.0 前</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section class="ch02" id="ch02">
+<h1>基本構文</h1>
+<h2>記号の意味</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>記号</th><th>書く位置</th><th>意味</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>:</code></td><td>変数・引数の名前の後ろ</td><td>型注釈（<code>const a: i32 = 10;</code>）。戻り値の型は <code>)</code> の後ろに <code>:</code> なしで書く</td></tr>
+<tr><td class="nowrap"><code>E!T</code> / <code>!T</code></td><td>型</td><td>エラー共用体型。エラー集合 <code>E</code> のどれか、または <code>T</code> の値。<code>E</code> を省くとコンパイラが推論する</td></tr>
+<tr><td class="nowrap"><code>?T</code></td><td>型</td><td>optional。値か <code>null</code></td></tr>
+<tr><td class="nowrap"><code>|x|</code></td><td>if ・ while ・ for ・ catch ・ switch の後ろ</td><td>キャプチャ。取り出した値に名前を付ける。<code>|*x|</code> はポインタで受ける</td></tr>
+<tr><td class="nowrap"><code>A || B</code></td><td>型</td><td>エラー集合の合併</td></tr>
+<tr><td class="nowrap"><code>!a</code></td><td>式</td><td>論理否定</td></tr>
+<tr><td class="nowrap"><code>a | b</code></td><td>式</td><td>ビット OR</td></tr>
+<tr><td class="nowrap"><code>and</code> / <code>or</code></td><td>式</td><td>論理積・論理和。<code>&amp;&amp;</code> ・ <code>||</code> ではなく語で書く。右辺は必要なときだけ評価する</td></tr>
+<tr><td class="nowrap"><code>orelse</code> / <code>.?</code></td><td>式</td><td>optional の取り出し。<code>null</code> なら既定値／ <code>.?</code> は <code>orelse unreachable</code> と同じ</td></tr>
+</tbody>
+</table></div>
+<h2>制御構文</h2>
+<pre><code class="language-zig">const a: i32 = 10;                  // const は変えない、var は変える
+const c = if (a &gt; 5) "大" else "小"; // if は式になる（三項演算子の代わり）
+
+const maybe: ?i32 = 42;
+if (maybe) |v| { _ = v; }           // 値があるときだけ取り出す
+
+var i: usize = 0;
+while (i &lt; 3) : (i += 1) {}         // : ( ) は毎回の後処理
+while (it.next()) |item| { _ = item; } // null が返るまで回す
+
+for (0..10) |n| { _ = n; }          // 範囲・配列・スライスを回す。C 形式の for は無い
+for (arr, 0..) |x, idx| { _ = x; _ = idx; } // 要素と添字
+for (arr) |*p| { p.* += 1; }        // ポインタで受けて書き換える
+
+const s = switch (a) {              // 全部の値を網羅しないとコンパイルエラー
+    0 =&gt; "zero",
+    1...9 =&gt; "small",
+    else =&gt; "big",
+};
+defer cleanup();                    // スコープを出るときに必ず実行する</code></pre>
+<h2>関数</h2>
+<pre><code class="language-zig">fn add(a: i32, b: i32) i32 { return a + b; }
+fn parse(s: []const u8) !u32 { ... }             // エラーを返しうる
+fn max(comptime T: type, a: T, b: T) T { ... }   // 型を引数で受ける（ジェネリクスの代わり）</code></pre>
+<ul>
+<li>関数はすべて普通の同期関数。中断・再開できる特別な関数は無い</li>
+<li>クロージャは無い。状態は構造体に持たせる</li>
+<li>値を捨てられるのは <code>void</code> 型の式だけ。戻り値を使わないなら <code>_ = f();</code> と明示する</li>
+</ul>
+</section>
+
+<section class="ch03" id="ch03">
+<h1>メモリ管理</h1>
+<p>GC は無く、確保も解放も手動で行う。<strong>メモリを確保する関数は allocator を引数で受け取る</strong>。確保の仕方は呼び出し側が決める。</p>
+<pre><code class="language-zig">fn makeList(alloc: std.mem.Allocator, n: usize) ![]u32 {
+    return try alloc.alloc(u32, n);   // 失敗すると error.OutOfMemory
+}
+
+pub fn main() !void {
+    var gpa = std.heap.DebugAllocator(.{}){};
+    defer _ = gpa.deinit();            // 終了時にリークを報告する
+    const alloc = gpa.allocator();
+
+    const list = try makeList(alloc, 10);
+    defer alloc.free(list);            // 確保した直後に解放を書く
+}</code></pre>
+<h2>allocator の選び方</h2>
+<p>言語リファレンスの「Choosing an Allocator」に挙がっているもの。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>allocator</th><th>使いどころ</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>std.heap.c_allocator</code></td><td>libc をリンクするなら、主な allocator の第一候補</td></tr>
+<tr><td class="nowrap"><code>std.heap.FixedBufferAllocator</code></td><td>使う量の上限がコンパイル時に分かるとき。ヒープを使わない</td></tr>
+<tr><td class="nowrap"><code>std.heap.ArenaAllocator</code></td><td>コマンドラインのプログラムや、1 フレーム・1 リクエスト単位の処理。最後にまとめて解放する</td></tr>
+<tr><td class="nowrap"><code>std.heap.page_allocator</code></td><td>OS からページ単位で確保する。arena の土台に使う</td></tr>
+<tr><td class="nowrap"><code>std.testing.allocator</code></td><td>テスト用。簡単なリーク検出をする</td></tr>
+<tr><td class="nowrap"><code>std.testing.FailingAllocator</code></td><td><code>error.OutOfMemory</code> の扱いをテストする</td></tr>
+<tr><td class="nowrap"><code>std.heap.DebugAllocator</code></td><td>Debug ビルドの汎用。0.14 で <code>GeneralPurposeAllocator</code> から改名</td></tr>
+<tr><td class="nowrap"><code>std.heap.smp_allocator</code></td><td>リリースビルドの汎用</td></tr>
+</tbody>
+</table></div>
+<h2>Rust との違い</h2>
+<p>Rust はコンパイル時に所有権を検査するが、Zig は検査しない。解放後の使用や二重解放は、Debug ビルドの実行時チェックや <code>DebugAllocator</code> で見つける。Bun が Rust へ移った主な理由もここにある（「Zig で書かれたプロジェクト」の章）。</p>
+</section>
+
+<section class="ch04" id="ch04">
+<h1>エラー処理</h1>
+<p>例外は無い。エラーは戻り値として、エラー共用体型 <code>E!T</code> で返す。</p>
+<pre><code class="language-zig">const ParseError = error{ Empty, TooLong };  // エラー集合を定義する
+
+fn check(s: []const u8) ParseError!void {
+    if (s.len == 0) return error.Empty;
+    if (s.len &gt; 10) return error.TooLong;
+}
+
+fn run() !void {
+    try check("abc");                  // エラーなら呼び出し元へ返す
+
+    check("") catch |err| switch (err) { // その場で処理する
+        error.Empty =&gt; {},
+        error.TooLong =&gt; {},
+    };
+
+    const n = std.fmt.parseInt(u8, "x", 10) catch 0; // 失敗したら既定値
+    _ = n;
+
+    if (check("x")) |_| {} else |err| { _ = err; } // if でも分けられる
+}
+
+fn open(alloc: std.mem.Allocator) !*Res {
+    const r = try alloc.create(Res);
+    errdefer alloc.destroy(r);         // この後でエラーが返ったときだけ実行する
+    try r.init();
+    return r;
+}</code></pre>
+<div class="tablewrap"><table>
+<thead><tr><th>他言語の書き方</th><th>Zig</th></tr></thead>
+<tbody>
+<tr><td><code>throw</code></td><td><code>return error.Xxx;</code></td></tr>
+<tr><td><code>try { } catch { }</code></td><td><code>x() catch |err| { ... }</code>（式単位）</td></tr>
+<tr><td>呼び出し元へ伝える</td><td><code>try x()</code></td></tr>
+<tr><td><code>finally</code></td><td><code>defer</code></td></tr>
+<tr><td>失敗したときだけ後始末</td><td><code>errdefer</code></td></tr>
+<tr><td>意図して無視する</td><td><code>x() catch unreachable</code></td></tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>エラーは黙って捨てられない</strong>。値を捨てられるのは <code>void</code> だけなので、<code>try</code> ・ <code>catch</code> ・ <code>if</code> のどれかで扱う</li>
+<li>エラーは列挙値のようなもので、メッセージなどの情報は持たせられない。詳しい情報は別の引数で返す</li>
+<li><strong>エラーリターントレース</strong>。<code>main</code> からエラーが返ると、エラーが通ってきた経路を表示して終了コード 1 で終わる</li>
+<li><code>unreachable</code> と <code>@panic</code> は回復できない停止で、エラー処理とは別</li>
+</ul>
+</section>
+
+<section class="ch05" id="ch05">
+<h1>並行処理と非同期 I/O</h1>
+<h2>コルーチン・goroutine・generator</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>ほかの言語の機能</th><th>Zig では</th></tr></thead>
+<tbody>
+<tr><td>コルーチン（言語の機能として）</td><td>無い</td></tr>
+<tr><td>Go の goroutine</td><td>構文としては無い。近いのは <code>std.Io</code> の <code>io.async()</code> / <code>io.concurrent()</code></td></tr>
+<tr><td>JS の generator（<code>yield</code>）</td><td>無い。<code>next()</code> を持つ構造体（イテレータ）を書く</td></tr>
+</tbody>
+</table></div>
+<h2>async / await が外された理由</h2>
+<ul>
+<li>0.10 までは言語のキーワード（<code>async</code> / <code>await</code> / <code>suspend</code> / <code>resume</code>）があった</li>
+<li>Zig 自身で書いた新しいコンパイラでは、この機能が動かなかった。0.11.0 で使えなくなり、2022 年 12 月に言語リファレンスからも消えた</li>
+<li>言語リファレンスが挙げた未解決の問題は 4 つ
+<ul>
+<li>LLVM が async 関数を最適化できない</li>
+<li>他社製のデバッガで async 関数をデバッグできない</li>
+<li>取り消し（cancel）をどう扱うか決まっていない</li>
+<li>async 関数のポインタがあると、スタックの大きさが決まらない</li>
+</ul></li>
+<li>2025 年 7 月、キーワードは正式に削除された。言語に <code>async</code> / <code>await</code> のキーワードは戻さず、I/O の実装を支える低水準の仕組みとして入れ直す、という方針が示された</li>
+</ul>
+<h2>代わりの仕組み（0.16 の std.Io）</h2>
+<p>allocator を引数で渡すのと同じように、I/O を行う関数は <code>io</code> を引数で受け取る。並行に動かしたいところで <code>io.async()</code> を呼ぶと future が返り、<code>future.await(io)</code> で結果を受け取る。</p>
+<pre><code class="language-zig">fn work(io: std.Io) !void {
+    var f = io.async(fetchA, .{io});
+    defer f.cancel(io) catch {};   // 取り消しと後始末
+    const r = try f.await(io);
+    _ = r;
+    try io.sleep(...);             // タイマ。待つのも io を通す
+}</code></pre>
+<div class="tablewrap"><table>
+<thead><tr><th></th><th>旧（〜0.10）</th><th>新（0.16〜）</th></tr></thead>
+<tbody>
+<tr><td>仕組み</td><td>言語のキーワード</td><td>標準ライブラリの関数</td></tr>
+<tr><td>関数の種類</td><td>同期関数と async 関数</td><td>すべて普通の関数。<code>io</code> を引数で受けるだけ</td></tr>
+<tr><td>実行のしかた</td><td>言語が決める</td><td>渡す <code>Io</code> の実装で選ぶ。<code>std.Io.Threaded</code>（スレッド）／ <code>std.Io.Evented</code>（io_uring ・ kqueue）</td></tr>
+</tbody>
+</table></div>
+<ul>
+<li>見た目は普通のブロッキングするコードと同じ。同じコードを、同期でも非同期でも動かせる</li>
+<li>同時に動くことが必要なときは <code>io.concurrent()</code> を使う</li>
+<li>0.16 で <code>Clock</code> ・ <code>Duration</code> ・ <code>Timeout</code> の型が入った。タイムアウトは、処理と sleep を競わせる形で書く例がある</li>
+<li>network は <code>std.Io.net</code> にある。0.16 で動く完全な例は見つけていない</li>
+</ul>
+</section>
+
+<section class="ch06" id="ch06">
+<h1>速度</h1>
+<h2>実行速度</h2>
+<p>LLVM を最適化に使うため、ReleaseFast で作ったバイナリは C ・ Rust と同程度になる。2021 年の比較スレッドでは 6 本中 4 本で Rust が上回ったが、差は小さく、マイクロベンチマークでは優劣を決められないと結論している。速さを分けるのは言語ではなく、メモリ確保の仕方やデータ配置といった書き方である。</p>
+<h2>コンパイル速度</h2>
+<p>Debug ビルドは、LLVM の機械語生成に時間がかかり、遅いとされてきた。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>処理系</th><th>最小プログラムの Debug ビルド</th></tr></thead>
+<tbody>
+<tr><td>Zig 0.13.0</td><td class="num">約 1.27 秒</td></tr>
+<tr><td>rustc 1.78.0</td><td class="num">約 0.28 秒</td></tr>
+<tr><td>clang++ 17</td><td class="num">約 0.16 秒</td></tr>
+</tbody>
+</table></div>
+<p>Zig の時間の大半は LLVM のオブジェクト出力だった（Ziggit の投稿者 1 名の計測）。</p>
+<p>その対策として、Zig は次の 2 つを進めている。</p>
+<ul>
+<li><strong>自前の x86 バックエンド</strong>: Debug ビルドで LLVM を使わない</li>
+<li><strong>インクリメンタルコンパイル</strong>: 変えた関数だけを作り直す</li>
+</ul>
+<p>再ビルドがミリ秒単位になったという報告や、75 秒が 20 秒に縮んだという報告がある。ただし二次情報で、計測の条件は確かめていない。2026 年 5 月には、ビルドシステムの改修で <code>zig build -h</code> が約 150 ミリ秒から約 14 ミリ秒になった。</p>
+<div class="callout"><strong>数値は自分の環境で測り直す。</strong>この章の数値は版の古い計測や二次情報を含む。Zig は版ごとにコンパイラが大きく変わるため、使う版で hyperfine などを使って測らないと判断に使えない。</div>
+</section>
+
+<section class="ch07" id="ch07">
+<h1>Zig で書かれたプロジェクト</h1>
+<div class="tablewrap"><table>
+<thead><tr><th>プロジェクト</th><th>何か</th><th>補足</th></tr></thead>
+<tbody>
+<tr><td class="nowrap">Bun</td><td>JavaScript/TypeScript のランタイム・バンドラ・パッケージマネージャ</td><td>Zig で開発され、Zig の採用例として最も知られていた。2025 年 12 月に Anthropic が買収。その後 Rust に書き換えられ、2026 年 5 月に本体へ取り込まれた。約 53.5 万行の Zig を AI で移植し、主な理由は use-after-free などのメモリ安全性の不具合を防ぐこと。Zig 版の最後は 1.3.14</td></tr>
+<tr><td class="nowrap">TigerBeetle</td><td>金融取引（複式簿記）向けの分散データベース</td><td>Zig Software Foundation へ Synadia と共同で 512,000 ドルの寄付を表明</td></tr>
+<tr><td class="nowrap">Ghostty</td><td>ターミナルエミュレータ</td><td></td></tr>
+<tr><td class="nowrap">Roc</td><td>関数型言語のコンパイラ</td><td>Rust から Zig へ書き直し</td></tr>
+<tr><td class="nowrap">River</td><td>Wayland の動的タイル型コンポジタ</td><td></td></tr>
+<tr><td class="nowrap">hermetic_cc_toolchain</td><td>Bazel 用の C/C++ ツールチェーン</td><td>Uber が管理。<code>zig cc</code> の上で C/C++ をクロスコンパイルする。Uber は arm64 対応の基盤に使った</td></tr>
+<tr><td class="nowrap">Zig</td><td>Zig のコンパイラ</td><td>Zig 自身で書かれている（セルフホスト）</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section class="ch08" id="ch08">
+<h1>出典</h1>
+<ul>
+<li><a href="https://ziglang.org/documentation/master/">Zig Language Reference（master）</a></li>
+<li><a href="https://andrewkelley.me/post/zig-new-async-io-text-version.html">Andrew Kelley: Zig's New Async I/O</a></li>
+<li><a href="https://git.jakstys.lt/motiejus/zig/commit/6e52f36d46f6dbcd4be6295fea6d54868399c12f/">langref: eliminate dependencies on stage1（async を外したコミット）</a></li>
+<li><a href="https://git.jakstys.lt/motiejus/zig/commit/fc2c1883b36a6ba8c7303d12b57147656dc7dd70">remove async, await, usingnamespace（#24362）</a></li>
+<li><a href="https://devclass.com/2025/07/07/zig-lead-makes-extremely-breaking-change-to-stdio-ahead-of-async-and-awaits-return/">DevClass: extremely breaking change to std.io</a></li>
+<li><a href="https://ziggit.dev/t/a-little-help-with-io-please-i-am-trying-to-understand-how-to-use-the-new-io-interface-for-zig/14006">Ziggit: the new Io interface</a></li>
+<li><a href="https://charlesfonseca.substack.com/p/asyncawait-is-finally-back-in-zig">Async/Await is finally back in Zig</a></li>
+<li><a href="https://www.youngju.dev/blog/2026-07-16-zig-016-io-interface">Zig 0.16 Io interface (youngju.dev)</a></li>
+<li><a href="https://git.uoc.run.place/Applied-Software/ghostty/commit/274f9e6c3a97163bbe5c3ee1c412ae45d7545c36">Ghostty: Zig 0.14 対応のコミット（DebugAllocator への改名）</a></li>
+<li><a href="https://ziggit.dev/t/newcomer-getting-into-allocators/9621">Ziggit: Newcomer: Getting into Allocators</a></li>
+<li><a href="https://lwn.net/Articles/1067634/">LWN: Zig 0.16.0</a></li>
+<li><a href="https://idroot.us/install-zig-programming-language-ubuntu-26-04/">How To Install Zig on Ubuntu 26.04 LTS</a></li>
+<li><a href="https://jisaku.com/posts/zig-systems-programming-pc">zig systems programming pc</a></li>
+<li><a href="https://ziggit.dev/t/why-is-zig-much-slower-than-other-llvm-based-compilers-includes-benchmark/5040">Why is Zig much slower than other LLVM-based compilers?</a></li>
+<li><a href="https://ziggit.dev/t/why-is-zig-build-so-slow/16935">Why is zig build so slow?</a></li>
+<li><a href="https://users.rust-lang.org/t/is-zig-lang-faster-than-rust/70390">Is zig lang faster than rust?</a></li>
+<li><a href="https://ecosistemastartup.com/?p=66785">Zig 2026: compilación incremental y nuevos tipos</a></li>
+<li><a href="https://tech-insider.org/zig-vs-rust-2026/">Zig vs Rust 2026</a></li>
+<li><a href="https://zeli.app/story/49085666">Inside Zig's Incremental Compilation</a></li>
+<li><a href="https://simonwillison.net/tags/zig">Simon Willison's Weblog: zig</a></li>
+<li><a href="https://tigerbeetle.com/blog/2025-10-25-synadia-and-tigerbeetle-pledge-512k-to-the-zig-software-foundation/">Synadia and TigerBeetle Pledge $512,000 to the Zig Software Foundation</a></li>
+<li><a href="https://www.developersdigest.tech/blog/roc-rust-to-zig-rewrite-feldman">roc rust to zig rewrite</a></li>
+<li><a href="https://www.theregister.com/devops/2026/05/14/anthropics-bun-rust-rewrite-merged-at-speed-of-ai/5240381">The Register: Anthropic's Bun Rust rewrite merged at speed of AI</a></li>
+<li><a href="https://www.infoq.com/news/2026/09/bun-AI-rewrite-zig-rust-4-months/">InfoQ: Bun Rewrites 535K Lines of Zig into Rust</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Bun_(software)">Wikipedia: Bun (software)</a></li>
+<li><a href="https://codeberg.org/yugen-m7/river">river (Codeberg)</a></li>
+<li><a href="https://github.com/uber/hermetic_cc_toolchain">uber/hermetic_cc_toolchain</a></li>
+<li><a href="https://www.uber.com/en-TW/blog/bootstrapping-ubers-infrastructure-on-arm64-with-zig/">Uber: Bootstrapping Uber's Infrastructure on arm64 with Zig</a></li>
+</ul>
+</section>
+</div>
+<footer><a class="back-home" href="../" title="親サイトへ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-label="⌂"><path d="M2 8 L8 2 L14 8 M4 7 V14 H12 V7"/></svg></a></footer>
+</body>
+</html>
